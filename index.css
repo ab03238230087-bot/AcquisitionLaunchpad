@@ -1,0 +1,54 @@
+import React, { useEffect, useState } from 'react';
+import { motion, useSpring, useMotionValue } from 'framer-motion';
+
+export const Cursor: React.FC = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  
+  // Adjusted for snappier response, less "sliding" feel
+  // Higher stiffness = faster snap
+  // Lower mass = less inertia
+  const springConfig = { damping: 40, stiffness: 450, mass: 0.3 }; 
+  const springX = useSpring(cursorX, springConfig);
+  const springY = useSpring(cursorY, springConfig);
+
+  useEffect(() => {
+    const moveCursor = (e: MouseEvent) => {
+      cursorX.set(e.clientX - 16); // Center offset
+      cursorY.set(e.clientY - 16);
+      if (!isVisible) setIsVisible(true);
+    };
+
+    const handleMouseEnter = () => setIsVisible(true);
+    const handleMouseLeave = () => setIsVisible(false);
+
+    window.addEventListener('mousemove', moveCursor);
+    document.body.addEventListener('mouseenter', handleMouseEnter);
+    document.body.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      window.removeEventListener('mousemove', moveCursor);
+      document.body.removeEventListener('mouseenter', handleMouseEnter);
+      document.body.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [cursorX, cursorY, isVisible]);
+
+  return (
+    <motion.div
+      id="custom-cursor"
+      className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[9999] mix-blend-screen"
+      style={{
+        x: springX,
+        y: springY,
+        opacity: isVisible ? 1 : 0,
+      }}
+    >
+      {/* Soft gold glow */}
+      <div className="absolute inset-0 rounded-full bg-primary/40 blur-[20px] transform scale-150" />
+      {/* Center dot for precision */}
+      <div className="absolute inset-0 m-auto w-1.5 h-1.5 bg-primary/80 rounded-full" />
+    </motion.div>
+  );
+};
